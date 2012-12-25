@@ -1,6 +1,6 @@
-part of DiceNDring;
+part of game;
 
-class Dice extends BoxedDrawable{
+class Dice{
   static final num MARGIN = 3;
   static final num DICE_WIDTH = Field.FIELD_WIDTH*0.8;
   static final num TWO_PI = PI*2;
@@ -10,12 +10,13 @@ class Dice extends BoxedDrawable{
   static final int GREEN = 2;
   static final int YELLOW = 3;
   
+  Rectangle box;
   int value = 1;
   int color = RED;
   bool isDragged = false;
   Field _field = null;
   
-  Dice(Rectangle box, int this.value, int this.color): super(box);
+  Dice(Rectangle this.box, int this.value, int this.color);
   
   void drawPoint(CanvasRenderingContext2D context){
     context.beginPath();
@@ -83,7 +84,7 @@ class Dice extends BoxedDrawable{
   
 }
 
-class Field extends BoxedDrawable{
+class Field{
 
   static final num FIELD_HEIGHT = 70;
   static final num FIELD_WIDTH = FIELD_HEIGHT;
@@ -91,11 +92,12 @@ class Field extends BoxedDrawable{
   static final defaultBackground = "white"; //"#99CCFF";
   static final selectedBackground = "#ffcccc";
   
-  Field(Rectangle box): super(box);
+  Field(Rectangle this.box);
   
   bool _selected = false;
   bool _diceLocked = false;
   Dice dice;
+  Rectangle box;
   
   String getColor(){
     if (_diceLocked){
@@ -161,21 +163,21 @@ class Field extends BoxedDrawable{
   }
 }
 
-class GameBoard extends CompositeBoxDrawable{
+class GameBoard {
   int _horizontalFields;
   int _verticalFields;
   List<Field> _fields = new List<Field>();
   static final int MARGIN = 8;
-
+  Rectangle box;
   
-  GameBoard(Rectangle box, [int this._horizontalFields = 4, int this._verticalFields = 4]): super(box){
+  GameBoard(Rectangle this.box, [int this._horizontalFields = 4, int this._verticalFields = 4]){
     for(num y=0; y<_verticalFields; y++){
       for(num x=0; x<_horizontalFields; x++){
-        Point pos = new Point(x*(Field.FIELD_WIDTH+MARGIN), y*(Field.FIELD_HEIGHT+MARGIN));
+        Point2D pos = new Point2D(x*(Field.FIELD_WIDTH+MARGIN), y*(Field.FIELD_HEIGHT+MARGIN));
         Rectangle rect = new Rectangle(pos, Field.FIELD_WIDTH, Field.FIELD_HEIGHT);
         Field field = new Field(rect);
         _fields.add(field);
-        addDrawable(field);
+        //addDrawable(field);
         field.box.parentRectangle = this.box;
       }
     }
@@ -220,7 +222,7 @@ class DiceFactory{
   }
   
   Dice createRandomDice(){
-    Rectangle rect = new Rectangle(new Point(0,0),Dice.DICE_WIDTH,Dice.DICE_WIDTH);
+    Rectangle rect = new Rectangle(new Point2D(0,0),Dice.DICE_WIDTH,Dice.DICE_WIDTH);
     
     Dice d = new Dice(rect, getRandomValue(), getRandomColor());
     

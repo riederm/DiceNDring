@@ -1,4 +1,4 @@
-part of DiceNDring;
+part of game;
 
 class FieldSetStats{
   List<Dice> dices = new List<Dice>(4);
@@ -93,9 +93,9 @@ class DifferentValueEvaluation extends BoardEvaluation{
   }
 }
 
-class TwoFullPair extends BoardEvaluation{
+class TwoFullPairEvaluation extends BoardEvaluation{
   
-  TwoFullPair(num evalPoints, [bool removesDices = false]): super(evalPoints, removesDices);
+  TwoFullPairEvaluation(num evalPoints, [bool removesDices = false]): super(evalPoints, removesDices);
   
   num evaluate(FieldSetStats stats){
     //check if we found 2 different colors
@@ -134,21 +134,21 @@ class Evaluator{
     evaluators.add(new And(100, true, new DifferentColorEvaluation(1, false), new DifferentValueEvaluation(1, false)));
 
     // Two Pair (e.g. 2x 1blue, 2x3red)
-    evaluators.add(new TwoFullPair(60));
+    evaluators.add(new TwoFullPairEvaluation(60));
     //Same color only (e.g. 1,2,4,1 green)
     evaluators.add(new SameColorEvaluation(40, false));
     //Same number only (1g 1r 1g 1b)
     evaluators.add(new SameValueEvaluation(40, false));
     //pair color, pair number (1g1r2g2r)
-    evaluators.add(new PairColorPairNumber(20));
+    //evaluators.add(new PairColorPairNumber(20));
     //each color only (1r2b1y1g)
     evaluators.add(new DifferentColorEvaluation(10, false));
     //each number only (1r2b3y4g)
     evaluators.add(new DifferentValueEvaluation(10, false));
     //pair color only (1r3r4y1y)
-    evaluators.add(new TwoColorPair(5, false));
+    //evaluators.add(new TwoColorPair(5, false));
     //pair number only (4g4b1r1r)
-    evaluators.add(new TwoNumberPair(5, false));
+    //evaluators.add(new TwoNumberPair(5, false));
     
     evaluators.sort((BoardEvaluation a, BoardEvaluation b) => a.points.compareTo(b.points));
   }

@@ -1,13 +1,13 @@
-part of DiceNDring;
+library geo;
 
-class Point{
+class Point2D{
   num x, y;
   
-  Point(num this.x, num this.y);
+  Point2D(num this.x, num this.y);
   
-  operator +(Point other) => new Point(x+other.x, y+other.y); 
+  operator +(Point2D other) => new Point2D(x+other.x, y+other.y); 
   
-  void move(Point p){
+  void move(Point2D p){
     moveBy(p.x,p.y);
   }
   
@@ -16,7 +16,7 @@ class Point{
     this.y+=y;
   }
   
-  void moveTo(Point p){
+  void moveTo(Point2D p){
     this.x = p.x;
     this.y = p.y;
   }
@@ -24,26 +24,26 @@ class Point{
 
 class Rectangle {
 
-  Point pos;
+  Point2D pos;
   Rectangle parentRectangle; 
   num width;
   num height;
   
-  Rectangle(Point this.pos, num this.width, num this.height);
+  Rectangle(Point2D this.pos, num this.width, num this.height);
   
   num get right   => pos.x + width;
   num get bottom  => pos.y + height;
   num get left    => pos.x;
   num get top     => pos.y;
   
-  Point absPos(){
+  Point2D absPos(){
     if (parentRectangle != null){
       return pos + parentRectangle.absPos();
     }
     return pos;
   }
   
-  bool isPointInside(Point p){
+  bool isPointInside(Point2D p){
     return isInside(p.x, p.y);
   }
   

@@ -1,4 +1,4 @@
-part of DiceNDring;
+part of render;
 
 abstract class Drawable{
   bool _visible = true;
@@ -47,7 +47,6 @@ abstract class Drawable{
     }        
   }
 }
-
 
 abstract class BoxedDrawable extends Drawable{
  
@@ -198,4 +197,9 @@ class RenderingEngine{
     contentLayer.drawables.remove(d);
     foregroundLayer.drawables.remove(d);
   }
+}
+class DrawableField extends BoxedDrawable{
+  Field field;
+  
+  DrawableField(Field this.field, Rectangle box): super(box);
 }

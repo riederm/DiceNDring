@@ -2,27 +2,24 @@ library DiceNDring;
 
 import 'dart:html';
 import 'dart:math';
+import '../geo/Geo.dart';
+import '../game/game.dart';
 
-part 'Geo.dart';
-part 'Rendering.dart';
-part 'GameElements.dart';
 part 'MouseHandler.dart';
-part 'BoardEvaluation.dart';
 
 void main() {
-
   CanvasElement canvas = query("#container");
   ButtonElement lockButton = query("#lockButton");
   
   RenderingEngine engine = new RenderingEngine(canvas, canvas.clientWidth, canvas.clientHeight);
   MouseHandler handler = new MouseHandler(canvas, lockButton, engine.foregroundLayer, engine.contentLayer);
   
-  Rectangle r = new Rectangle(new Point(40,40), 4*Field.FIELD_WIDTH, Field.FIELD_HEIGHT);
+  Rectangle r = new Rectangle(new Point2D(40,40), 4*Field.FIELD_WIDTH, Field.FIELD_HEIGHT);
   
   GameBoard turnSlot = new GameBoard(r, 4, 1);
   engine.backgroundLayer.drawables.add(turnSlot);
   
-  GameBoard board = new GameBoard(new Rectangle(new Point(40,140), 250, 250), 4, 4);
+  GameBoard board = new GameBoard(new Rectangle(new Point2D(40,140), 250, 250), 4, 4);
   engine.backgroundLayer.drawables.add(board);
   
 
