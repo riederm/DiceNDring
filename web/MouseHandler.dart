@@ -12,7 +12,8 @@ class MouseHandler {
   Layer topLayer;
   Layer dragLayer;
   
-  List<Field> _fields = new List<Field>();
+
+  Set<Field> _fields = new Set<Field>();
   Set<Dice> _dices = new Set<Dice>();
   
   MouseHandler(CanvasElement this.canvas, ButtonElement this.lockButton, Layer this.topLayer, Layer this.dragLayer){
@@ -20,7 +21,11 @@ class MouseHandler {
   }
   
   void addField(Field f){
-    _fields.add(f);
+    _fields.add(f); 
+  }
+  
+  void addDice(Dice d){
+  _dices.add(d);
   }
   
   bool skipNext = false;
@@ -51,15 +56,15 @@ class MouseHandler {
   void onDragStart(MouseEvent e) {
     e.preventDefault();
     for(Dice d in _dices){
-      if (d.box.isInsideAbs(e.offsetX, e.offsetY) && !d._field.isLocked()){
+      if (d.box.isInsideAbs(e.offsetX, e.offsetY) && !d.field.isLocked()){
         draggingDice = d;
         d.isDragged = true;
-        diceOrigin = d._field;
+        diceOrigin = d.field;
         
         draggingDice.box.centerAbsoluteOverPoint(e.offsetX, e.offsetY);
         
-        dragLayer.drawables.remove(draggingDice);
-        topLayer.drawables.add(draggingDice);
+        Drawable drawable = dragLayer.drawables.remove(draggingDice);
+        topLayer.drawables[draggingDice]= drawable;
         break;
       }
     }
@@ -67,16 +72,17 @@ class MouseHandler {
   
   void onDragEnd(MouseEvent e){
     if (draggingDice != null && draggingDice.isDragged){
-      draggingDice.isDragged = false;
+      Dice dice = draggingDice;
+      dice.isDragged = false;
       
-      dragLayer.drawables.add(draggingDice);
-      topLayer.drawables.remove(draggingDice);
+      Drawable drawable = topLayer.drawables.remove(draggingDice);
+      dragLayer.drawables[draggingDice] = drawable;
       
       if (droppingField != null && droppingField.isFree()){
-          draggingDice._field.clearDice();
+          draggingDice.field.clearDice();
           droppingField.setDice(draggingDice);
       }else{
-        draggingDice._field.setDice(draggingDice);        
+        draggingDice.field.setDice(draggingDice);        
       }
       draggingDice = null;
     }
@@ -84,8 +90,7 @@ class MouseHandler {
   
   
   void updateSelected(num offsetX, num offsetY){
-    for(int i = 0; i<_fields.length; i++){
-      Field field = _fields[i];
+    for(Field field in _fields){
       if (field.box.isInsideAbs(offsetX, offsetY)){
         field.setSelected(true);
         droppingField = field;

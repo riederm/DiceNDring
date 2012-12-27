@@ -172,7 +172,7 @@ class Evaluator{
     
     for(BoardEvaluation e in evaluators){
       num p = e.evaluate(stats);
-      if (p > 0){
+      if (p != null && p > 0){
         points += p;
       }
     }

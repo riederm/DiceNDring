@@ -6,4 +6,4 @@ import 'dart:html';
 import 'dart:math';
 
 part 'Rendering.dart';
-
+part 'GameDrawables.dart';

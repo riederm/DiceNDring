@@ -96,7 +96,7 @@ abstract class BoxedDrawable extends Drawable{
   }
 }
 
-abstract class CompositeBoxDrawable extends BoxedDrawable{
+class CompositeBoxDrawable extends BoxedDrawable{
   List<Drawable> _drawables = new List<Drawable>();
   
   CompositeBoxDrawable(Rectangle box) : super(box);
@@ -126,10 +126,10 @@ class BoxedLayer extends BoxedDrawable{
 }
 
 class Layer extends Drawable {
-  Set<Drawable> drawables = new Set<Drawable>();
+  Map<Object, Drawable> drawables = new Map<Object, Drawable>();
   
   void draw(CanvasRenderingContext2D context){
-    drawables.forEach((d) { 
+    drawables.values.forEach((Drawable d) { 
           if(d.isVisible()){  
             d.draw(context);
           }
@@ -192,14 +192,18 @@ class RenderingEngine{
     query("#notes").text = "${fpsAverage.round().toInt()} fps";
   }
 
-  void removeFromAllLayers(Dice d) {
+  void removeFromAllLayers(Object d) {
     backgroundLayer.drawables.remove(d);
     contentLayer.drawables.remove(d);
     foregroundLayer.drawables.remove(d);
   }
-}
-class DrawableField extends BoxedDrawable{
-  Field field;
   
-  DrawableField(Field this.field, Rectangle box): super(box);
+  void registerDrawableField(Field field){
+    backgroundLayer.drawables[field] = new DrawableField(field);
+  }
+  
+  void registerDrawableDice(Dice dice){
+    contentLayer.drawables[dice] = new DrawableDice(dice);
+  }
 }
+
