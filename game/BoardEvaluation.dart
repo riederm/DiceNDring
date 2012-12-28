@@ -12,14 +12,18 @@ class FieldSetStats{
       dices[i] = null;
     }
   }
-}
 
-abstract class BoardEvaluation {
-  num points;
-  bool removesDices;
-  BoardEvaluation(num this.points, [this.removesDices = false]);
-  
-  num evaluate(FieldSetStats stats);
+  void updateStats(List<Dice> newDices) {
+    for(int i=0; i<newDices.length; i++){
+      dices[i] == null;
+      Dice dice = newDices[i];
+      if (dice != null){
+        dices[i] = dice;
+        colors[dice.color] += 1;
+        values[dice.value-1] += 1;
+      }
+    }
+  }
   
   int isThis(int element, int expected){
     if (element == expected){
@@ -28,6 +32,21 @@ abstract class BoardEvaluation {
     return 0;
   }
 
+  num getColorFrequencyOf(int targetColor){
+    return colors.reduce(0, (int prev, int element) => prev + isThis(targetColor, element));
+  }
+  
+  num getValueFrequencyOf(int targetValue){
+    return values.reduce(0, (int prev, int element) => prev + isThis(targetValue, element));
+  }
+}
+
+abstract class BoardEvaluation {
+  num points;
+  bool removesDices;
+  BoardEvaluation(num this.points, [this.removesDices = false]);
+  
+  num evaluate(FieldSetStats stats);
 }
 
 class And extends BoardEvaluation{
@@ -99,8 +118,8 @@ class TwoFullPairEvaluation extends BoardEvaluation{
   
   num evaluate(FieldSetStats stats){
     //check if we found 2 different colors
-    int numberOfTwoColors = stats.colors.reduce(0, (int prev, int element) => isThis(2, element));
-    int numberOfTwoValues = stats.colors.reduce(0, (int prev, int element) => isThis(2, element));
+    int numberOfTwoColors = stats.getColorFrequencyOf(2);
+    int numberOfTwoValues = stats.getValueFrequencyOf(2);
     
     int firstColorIndex = 0;
     if (numberOfTwoColors == 2 && numberOfTwoValues == 2){
@@ -112,26 +131,105 @@ class TwoFullPairEvaluation extends BoardEvaluation{
       if (secondDiceFound){
         return points; 
       }
-      return 0;
     }
+    return 0;
   }
 }
 
+class SameValueSameColorEvaluation extends And{
+  SameValueSameColorEvaluation(num points, bool removesDices): 
+    super(points, removesDices, new SameColorEvaluation(1, false), 
+                                new SameValueEvaluation(1, false));
+}
 
+class SameColorDifferentValuesEvaluation extends And{
+  SameColorDifferentValuesEvaluation(num points, bool removesDices):
+    super(points, removesDices, new SameColorEvaluation(1, false), 
+                                new DifferentValueEvaluation(1, false));
+}
+
+class DifferentColorSameValuesEvaluation extends And{
+  DifferentColorSameValuesEvaluation(num points, bool removesDices):
+    super(points, removesDices, new DifferentColorEvaluation(1, false), 
+                                new SameValueEvaluation(1, false));
+}
+
+class DifferentColorDifferentValuesEvaluation extends And{
+  DifferentColorDifferentValuesEvaluation(num points, bool removesDices):
+      super(points, removesDices, new DifferentColorEvaluation(1, false), 
+                                  new DifferentValueEvaluation(1, false));
+  
+}
+
+class PairColorPairNumberEvaluation extends BoardEvaluation{
+  PairColorPairNumberEvaluation(num evalPoints, [bool removesDices = false]): super(evalPoints, removesDices);
+  
+  num evaluate(FieldSetStats stats){
+    num numberOfTwoColors = stats.getColorFrequencyOf(2);
+    num numberOfTwoValues = stats.getValueFrequencyOf(2);
+    
+    if (numberOfTwoColors == 2 && numberOfTwoValues == 2){
+      Dice firstDice = stats.dices[0];
+
+      //find the second dice with this color and check if the numbers DON'T matches 
+      //(the other two must automatically share the same condition)
+      bool secondDiceFound = stats.dices.some((Dice d) => d != firstDice && d.value != firstDice.value && d.color == firstDice.color);
+      if (secondDiceFound){
+        return points;
+      }
+    }
+    return 0;
+  }
+}
+
+class PairColorOnlyEvaluation extends BoardEvaluation{
+  PairColorOnlyEvaluation(num evalPoints, [bool removesDices = false]) : super(evalPoints, removesDices);
+  
+  num evaluate(FieldSetStats stats){
+    num numberOfTwoColors = stats.getColorFrequencyOf(2);
+    
+    if (numberOfTwoColors == 2){
+      if (stats.getValueFrequencyOf(2) != 2 && //not 1,1,2,2
+          stats.getValueFrequencyOf(1) != 4 && //not 1,2,3,4
+          stats.getValueFrequencyOf(4) != 1){  //not 1,1,1,1
+        return points;
+      }
+    }
+    return 0;
+  }
+}
+
+class PairValueOnlyEvaluation extends BoardEvaluation{
+  PairValueOnlyEvaluation(num evalPoints, [bool removesDices = false]) : super(evalPoints, removesDices);
+  
+  num evaluate(FieldSetStats stats){
+    num numberOfTwoValues = stats.getValueFrequencyOf(2);
+    
+    if (numberOfTwoValues == 2){
+      if (stats.getColorFrequencyOf(2) != 2 && //not R,R,G,G
+          stats.getColorFrequencyOf(1) != 4 && //not R,G,B,Y
+          stats.getColorFrequencyOf(4) != 1){  //not B,B,B,B
+        return points;
+      }
+    }
+    return 0;
+  }
+}
 
 class Evaluator{
   List<BoardEvaluation> evaluators = new List<BoardEvaluation>();
   FieldSetStats stats = new FieldSetStats();
   
   Evaluator(){
+    //
     // same color, same values 
-    evaluators.add(new And(400, true, new SameColorEvaluation(1, false), new SameValueEvaluation(1, false)));
+    evaluators.add(new SameValueSameColorEvaluation(400, true));
     // same color, different values
-    evaluators.add(new And(200, true, new SameColorEvaluation(1, false), new DifferentValueEvaluation(1, false)));
+    evaluators.add(new SameColorDifferentValuesEvaluation(200, true));
     // different color, same value
-    evaluators.add(new And(200, true, new DifferentColorEvaluation(1, false), new SameValueEvaluation(1, false)));
+    evaluators.add(new DifferentColorSameValuesEvaluation(200, true));
     // different color, different values
-    evaluators.add(new And(100, true, new DifferentColorEvaluation(1, false), new DifferentValueEvaluation(1, false)));
+    evaluators.add(new DifferentColorDifferentValuesEvaluation(100, true));
 
     // Two Pair (e.g. 2x 1blue, 2x3red)
     evaluators.add(new TwoFullPairEvaluation(60));
@@ -140,35 +238,25 @@ class Evaluator{
     //Same number only (1g 1r 1g 1b)
     evaluators.add(new SameValueEvaluation(40, false));
     //pair color, pair number (1g1r2g2r)
-    //evaluators.add(new PairColorPairNumber(20));
+    evaluators.add(new PairColorPairNumberEvaluation(20, false));
     //each color only (1r2b1y1g)
     evaluators.add(new DifferentColorEvaluation(10, false));
     //each number only (1r2b3y4g)
     evaluators.add(new DifferentValueEvaluation(10, false));
     //pair color only (1r3r4y1y)
-    //evaluators.add(new TwoColorPair(5, false));
+    evaluators.add(new PairColorOnlyEvaluation(5, false));
     //pair number only (4g4b1r1r)
-    //evaluators.add(new TwoNumberPair(5, false));
+    evaluators.add(new PairValueOnlyEvaluation(5, false));
     
     evaluators.sort((BoardEvaluation a, BoardEvaluation b) => a.points.compareTo(b.points));
   }
   
-  num getEvaluationFor(List<Field> fields){
+  num getEvaluationFor(List<Dice> dices){
     num points = 0;
     
     FieldSetStats myStats = stats;
-    stats.clear();
     
-    for(int i=0; i<fields.length; i++){
-      Field f = fields[i];      
-      if (!f.isFree()){
-        stats.dices[i] = f.dice;
-      }else{
-        return 0; //empty field! don't analyze
-      }
-    }
-    _updateColorStats(fields);
-    _updateValueStats(fields);
+    stats.updateStats(dices);
     
     for(BoardEvaluation e in evaluators){
       num p = e.evaluate(stats);
@@ -179,19 +267,4 @@ class Evaluator{
     return points;
   }
   
-  void _updateColorStats(List<Field> fields){
-    for(Field f in fields){
-      if (!f.isFree()){
-        stats.colors[f.dice.color] += 1;
-      }
-    }
-  }
-  
-  void _updateValueStats(List<Field> fields){
-    for(Field f in fields){
-      if (!f.isFree()){
-        stats.values[f.dice.value-1] += 1;
-      }
-    }
-  }
 }

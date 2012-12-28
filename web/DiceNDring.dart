@@ -50,6 +50,8 @@ void main() {
   engine.backgroundLayer.drawables[board] = boardDrawable;
   
   Game game = new Game(turnSlot, board, diceFactory);
+  game.onUpdatePoints = (int points) => query("#points").text = "${points} points";
+  
   
   game.rollNewDices();
   

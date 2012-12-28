@@ -188,6 +188,8 @@ class GameElementsFactory{
   }
 }
 
+typedef void updatePointsCallback(int points);
+
 class Game{
   GameBoard _turnSlot;
   GameBoard _board;
@@ -196,6 +198,8 @@ class Game{
   Evaluator evaluator = new Evaluator();
   
   num _points = 0;
+  
+  updatePointsCallback onUpdatePoints;
   
   Game(GameBoard this._turnSlot, GameBoard this._board, GameElementsFactory this._diceFactory);
   
@@ -288,9 +292,14 @@ class Game{
     if (_fieldSets == null){
       _fieldSets = getAllCombinations();
     }
-    
+    List<Dice> dices = new List<Dice>(4);
     void evaluateFieldSet(List<Field> fields){
-      num points = evaluator.getEvaluationFor(fields);
+      //import dices into dices-array
+      for(int i=0; i<fields.length; i++){
+        dices[i] = fields[i].dice;
+      }
+      
+      num points = evaluator.getEvaluationFor(dices);
       if (points > 0){
         _points += points;
         toRemove.addAll(fields);
@@ -309,6 +318,8 @@ class Game{
   }
   
   void updatePoints(){
-    query("#points").text = "${_points} points";
+    if (onUpdatePoints != null ){
+      onUpdatePoints(_points);
+    }
   }
 }
