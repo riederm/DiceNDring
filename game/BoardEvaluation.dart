@@ -19,7 +19,7 @@ class FieldSetStats{
       Dice dice = newDices[i];
       if (dice != null){
         dices[i] = dice;
-        colors[dice.color] += 1;
+        colors[dice.colorValue] += 1;
         values[dice.value-1] += 1;
       }
     }

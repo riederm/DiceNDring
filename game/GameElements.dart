@@ -4,37 +4,100 @@ abstract class BoxedElement{
   Rectangle box;
   
   BoxedElement(Rectangle this.box);
+}
+
+class RGBColor{
+  String _hexColor = null;
+  int _R = 0;
+  int _G = 0;
+  int _B = 0;
+
+  RGBColor(int this._R, int this._G, int this._B);
   
+  int get R => _R;
+      set R(int value){
+        _R = value;
+        _hexColor = null;
+      }
+  
+  int get G => _G;
+      set G(int value){
+        _G = value;
+        _hexColor = null;
+      }
+      
+  int get B => _B;
+      set B(int value){
+        _B = value;
+        _hexColor = null;
+      }
+  
+  int _moveInsideByteLimit(int val){
+    return math.min(math.max(0, val), 255);
+  }
+  
+  String fixLen(String number){
+    if (number.length == 1){
+      return '0${number}';
+    }
+    return number;
+  }
+  
+  String toString(){
+    if (_hexColor == null){
+      String r = fixLen(_moveInsideByteLimit(_R).toRadixString(16));
+      String g = fixLen(_moveInsideByteLimit(_G).toRadixString(16));
+      String b = fixLen(_moveInsideByteLimit(_B).toRadixString(16));
+      
+      _hexColor = '#${r}${g}${b}';
+    }
+    return _hexColor;
+  }
+  
+  void apply(RGBColor other){
+    R = other.R;
+    G = other.G;
+    B = other.B;
+  }
 }
 
 class Dice extends BoxedElement{
   static final num MARGIN = 3;
   static final num DICE_WIDTH = Field.FIELD_WIDTH*0.8;
-
   
   static final int RED = 0;
   static final int BLUE = 1;
   static final int GREEN = 2;
   static final int YELLOW = 3;
   
+  static final RGBColor RED_Color = new RGBColor(204,51,0);
+  static final RGBColor BLUE_Color = new RGBColor(0,102,255);
+  static final RGBColor GREEN_Color = new RGBColor(51,153,0);
+  static final RGBColor YELLOW_Color = new RGBColor(255,204,51);
+  
   int value = 1;
-  int color = RED;
+  int colorValue = RED;
   bool isDragged = false;
   Field field = null;
   
-  Dice(int this.value, int this.color, Rectangle box): super(box);
+  RGBColor color;
   
-  String getColor(){
-    switch(color){
+  Dice(int this.value, int this.colorValue, Rectangle box): super(box){
+    color = new RGBColor(0,0,0);
+    switch(colorValue){
       case 0:
-        return "#CC3300";       
+        color.apply(RED_Color);//"#CC3300";
+        break;
       case 1:
-        return "#0066FF";
+        color.apply(BLUE_Color);//"#0066FF";
+        break;
       case 2: 
-        return "#339900"; 
+        color.apply(GREEN_Color);//"#339900";
+        break;
       case 3: 
       default:
-        return "#FFCC33";        
+        color.apply(YELLOW_Color);//"#FFCC33";
+        break;
     }
   }
 }
@@ -147,7 +210,7 @@ class GameBoard extends BoxedElement{
 typedef void Callback<T>(T element);
 class GameElementsFactory{
     
-  Random _random = new Random();
+  math.Random _random = new math.Random();
   Callback<Dice> onCreatedDice;
   Callback<Dice> onDisposeDice;
   
@@ -186,6 +249,13 @@ class GameElementsFactory{
       onDisposeDice(dice);
     }
   }
+}
+
+class EvaluationResult{
+  List<Field> fields;
+  num points;
+  
+  EvaluationResult(List<Field> this.fields, num this.points);
 }
 
 typedef void updatePointsCallback(int points);
@@ -282,39 +352,42 @@ class Game{
     fieldSets.addAll(getAllSquares());
     return fieldSets;
   }
-
-
   
   List<List<Field>> _fieldSets = null;
-  void evaluateAll(){
-    Set<Field> toRemove = new Set<Field>();
+  
+  List<EvaluationResult> evaluateAll(){
+    List<EvaluationResult> results = new List<EvaluationResult>();
     
     if (_fieldSets == null){
       _fieldSets = getAllCombinations();
     }
+    
+    Collection<List<Field>> setsToEvaluate = 
+        _fieldSets.filter((List<Field> fields) => noneIsEmpty(fields) && hasUnlockedDice(fields));
+     
     List<Dice> dices = new List<Dice>(4);
-    void evaluateFieldSet(List<Field> fields){
-      //import dices into dices-array
-      for(int i=0; i<fields.length; i++){
-        dices[i] = fields[i].dice;
-      }
-      
+    for(List<Field> fields in setsToEvaluate){
+      importDices(fields, dices);
       num points = evaluator.getEvaluationFor(dices);
       if (points > 0){
-        _points += points;
-        toRemove.addAll(fields);
+        results.add(new EvaluationResult(fields, points));
       }
     }
-        
-    _fieldSets.forEach(evaluateFieldSet);
-    updatePoints();
-    for(Field f in toRemove){
-      if (!f.isFree()){
-        Dice dice = f.dice;
-        f.clearDice();
-        _diceFactory.dispose(dice);
-      }
+    return results;
+  }
+  
+  void importDices(List<Field> fields, List<Dice> dices){
+    for(int i=0; i<fields.length; i++){
+      dices[i] = fields[i].dice;
     }
+  }
+
+  bool noneIsEmpty(List<Field> fields){
+    return fields.every((Field f) => !f.isFree());
+  } 
+  
+  bool hasUnlockedDice(List<Field> fields){
+    return fields.some((Field f) => !f.isLocked());
   }
   
   void updatePoints(){

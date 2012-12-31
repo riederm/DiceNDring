@@ -7,7 +7,7 @@ class DrawableField extends BoxedDrawable{
     _field = field;
   }
   
-  void drawNormalized(CanvasRenderingContext2D context){   
+  void drawNormalized(CanvasRenderingContext2D context, num time){   
     scaleContext(context);
     
     context.fillStyle = _field.getColor();
@@ -20,12 +20,14 @@ class DrawableField extends BoxedDrawable{
 }
 
 class DrawableDice extends BoxedDrawable{
-  static final num TWO_PI = PI*2;
+  static final num TWO_PI = math.PI*2;
   Dice dice;
   
   DrawableDice(Dice dice): super(dice.box){
     this.dice = dice;
   }
+  
+  
   
   void _drawValue(CanvasRenderingContext2D context, int value){
     context.save();
@@ -67,9 +69,9 @@ class DrawableDice extends BoxedDrawable{
     context.fill();
   }
   
-  void drawNormalized(CanvasRenderingContext2D context){
+  void drawNormalized(CanvasRenderingContext2D context, num time){
     scaleContext(context);
-    context.fillStyle = dice.getColor();
+    context.fillStyle = dice.color.toString();
     context.strokeStyle = "black";
     context.lineWidth = 0.06;
     roundRect(context, 0, 0, 1, 1, 0.1, true, true);

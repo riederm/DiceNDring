@@ -8,6 +8,9 @@ import '../rendering/render.dart';
 
 part 'MouseHandler.dart';
 
+
+
+  
 void main() {
   CanvasElement canvas = query("#container");
   ButtonElement lockButton = query("#lockButton");
@@ -16,9 +19,23 @@ void main() {
   MouseHandler handler = new MouseHandler(canvas, lockButton, engine.foregroundLayer, engine.contentLayer);
   
   GameElementsFactory diceFactory = new GameElementsFactory();
+
   void diceAdded(Dice d){
     handler.addDice(d);
-    engine.registerDrawableDice(d);
+    
+    DrawableDice drawable = new DrawableDice(d);
+    RGBColor white = new RGBColor(0xff, 0xff, 0xff);
+    RGBColor originalColor = new RGBColor(0,0,0);
+    originalColor.apply(drawable.dice.color);
+    
+    AnimationLoop loop = new AnimationLoop();
+    loop.addAnimation(new ColorTransition(drawable, white, 500));
+    loop.addAnimation(new AnimationPause(drawable, 200));
+    loop.addAnimation(new ColorTransition(drawable, originalColor, 500));
+    loop.addAnimation(new AnimationPause(drawable, 2000));
+    
+    engine.contentLayer.drawables[d] = loop;
+    print(engine.contentLayer.drawables);
   };
   
   void diceDispose(Dice d){

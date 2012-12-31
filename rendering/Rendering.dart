@@ -11,7 +11,7 @@ abstract class Drawable{
     _visible = visible; 
   }
   
-  void draw(CanvasRenderingContext2D context);
+  void draw(CanvasRenderingContext2D context, num time);
   
   /**
    * Draws a rounded rectangle using the current state of the canvas. 
@@ -57,7 +57,7 @@ abstract class BoxedDrawable extends Drawable{
 
   BoxedDrawable(this.box);
   
-  void drawNormalized(CanvasRenderingContext2D context);
+  void drawNormalized(CanvasRenderingContext2D context, num time);
   
   void adaptContext(CanvasRenderingContext2D context, bool translate, bool scale){
     if (translate){
@@ -85,11 +85,11 @@ abstract class BoxedDrawable extends Drawable{
     }
   }
 
-  void draw(CanvasRenderingContext2D context){
+  void draw(CanvasRenderingContext2D context, num time){
     context.save();
     try{
       context.translate(box.left, box.top);
-      drawNormalized(context);
+      drawNormalized(context, time);
     }finally{
       context.restore();
     }
@@ -101,8 +101,8 @@ class CompositeBoxDrawable extends BoxedDrawable{
   
   CompositeBoxDrawable(Rectangle box) : super(box);
   
-  void drawNormalized(CanvasRenderingContext2D context){
-    _drawables.forEach((drawable) => drawable.draw(context));
+  void drawNormalized(CanvasRenderingContext2D context, num time){
+    _drawables.forEach((drawable) => drawable.draw(context, time));
   }
   
   void addDrawable(Drawable drawable){
@@ -110,16 +110,14 @@ class CompositeBoxDrawable extends BoxedDrawable{
   }
 }
 
-
-
 class BoxedLayer extends BoxedDrawable{
   BoxedLayer(Rectangle box, [bool shouldScale = true, bool shouldTranslate = true]): super(box);
   List<Drawable> drawables = new List<Drawable>();
   
-  void drawNormalized(CanvasRenderingContext2D context){
+  void drawNormalized(CanvasRenderingContext2D context, num time){
     drawables.forEach((d) { 
       if(d.isVisible()){  
-        d.draw(context);
+        d.draw(context, time);
       }
     });
   }
@@ -128,10 +126,10 @@ class BoxedLayer extends BoxedDrawable{
 class Layer extends Drawable {
   Map<Object, Drawable> drawables = new Map<Object, Drawable>();
   
-  void draw(CanvasRenderingContext2D context){
+  void draw(CanvasRenderingContext2D context, num time){
     drawables.values.forEach((Drawable d) { 
           if(d.isVisible()){  
-            d.draw(context);
+            d.draw(context, time);
           }
         });
   }
@@ -163,17 +161,19 @@ class RenderingEngine{
       showFps((1000 / (time - renderTime)).round());
     }
 
-    renderTime = time;
     _context.clearRect(0, 0, _width, _height);
-    _drawLayer(backgroundLayer);
-    _drawLayer(contentLayer);
-    _drawLayer(foregroundLayer);
+    renderTime = time;
+    
+    _drawLayer(backgroundLayer, renderTime);
+    _drawLayer(contentLayer, renderTime);
+    _drawLayer(foregroundLayer, renderTime);
+    
     window.requestAnimationFrame(draw);
   }
   
-  void _drawLayer(Layer layer){
+  void _drawLayer(Layer layer, num renderTime){
     if (layer.isVisible()){
-      layer.draw(_context);
+      layer.draw(_context, renderTime);
     }
   }
   
@@ -205,5 +205,6 @@ class RenderingEngine{
   void registerDrawableDice(Dice dice){
     contentLayer.drawables[dice] = new DrawableDice(dice);
   }
+  
 }
 
