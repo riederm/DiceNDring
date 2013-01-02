@@ -1,5 +1,29 @@
 part of render;
 
+abstract class BoxedAnimatable<T extends BoxedElement> extends BoxedDrawable{
+  T delegate;
+  
+  Set<DrawableAnimation<Drawable>> animations = new Set<DrawableAnimation<Drawable>>();
+  
+  BoxedAnimatable(T boxedElement): super(boxedElement.box){
+    delegate = boxedElement;
+  }
+  
+  void drawNormalized(CanvasRenderingContext2D context, num time){  
+    animations.forEach((DrawableAnimation a) => a.prepareAnimationFrame(time));
+    animations.forEach((DrawableAnimation a) => a.preDelegateDraw(context, this, time));
+    internalDrawNormalized(context, delegate, time);
+    animations.forEach((DrawableAnimation a) => a.postDelegateDraw(context, this, time));
+  }
+  
+  void addAnimation(DrawableAnimation animation){
+    animations.add(animation);
+    animation.onEnded.add( () => animations.remove(animation));
+  }
+  
+  void internalDrawNormalized(CanvasRenderingContext2D context, T delegate, num time);
+}
+
 class DrawableField extends BoxedDrawable{
   Field _field;
   
@@ -17,18 +41,15 @@ class DrawableField extends BoxedDrawable{
     context.strokeRect(0, 0, 1, 1, 0.03);
     context.fillRect(0, 0, 1, 1);
   }
+  
+ 
 }
 
-class DrawableDice extends BoxedDrawable{
+class DrawableDice extends BoxedAnimatable<Dice>{
   static final num TWO_PI = math.PI*2;
-  Dice dice;
   
-  DrawableDice(Dice dice): super(dice.box){
-    this.dice = dice;
-  }
-  
-  
-  
+  DrawableDice(Dice dice): super(dice);
+
   void _drawValue(CanvasRenderingContext2D context, int value){
     context.save();
     switch(value){
@@ -69,7 +90,7 @@ class DrawableDice extends BoxedDrawable{
     context.fill();
   }
   
-  void drawNormalized(CanvasRenderingContext2D context, num time){
+  void internalDrawNormalized(CanvasRenderingContext2D context, Dice dice, num time){
     scaleContext(context);
     context.fillStyle = dice.color.toString();
     context.strokeStyle = "black";

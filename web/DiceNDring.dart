@@ -26,16 +26,15 @@ void main() {
     DrawableDice drawable = new DrawableDice(d);
     RGBColor white = new RGBColor(0xff, 0xff, 0xff);
     RGBColor originalColor = new RGBColor(0,0,0);
-    originalColor.apply(drawable.dice.color);
+    originalColor.apply(drawable.delegate.color);
     
-    AnimationLoop loop = new AnimationLoop();
-    loop.addAnimation(new ColorTransition(drawable, white, 500));
-    loop.addAnimation(new AnimationPause(drawable, 200));
-    loop.addAnimation(new ColorTransition(drawable, originalColor, 500));
-    loop.addAnimation(new AnimationPause(drawable, 2000));
+    /*AnimationLoop<DrawableDice> loop = new AnimationLoop<DrawableDice>();
+    loop.addAnimation(new AnimationPause(1000));
+    loop.addAnimation(new AlphaTransition<DrawableDice>(350, 1, 0.3));
+    loop.addAnimation(new AlphaTransition<DrawableDice>(350, 0.3, 1));
     
-    engine.contentLayer.drawables[d] = loop;
-    print(engine.contentLayer.drawables);
+    drawable.animations.add(loop);*/
+    engine.contentLayer.drawables[d] = drawable;
   };
   
   void diceDispose(Dice d){
@@ -70,11 +69,56 @@ void main() {
   game.onUpdatePoints = (int points) => query("#points").text = "${points} points";
   
   
-  game.rollNewDices();
+  game.evaluateAll();
   
-  lockButton.on.click.add((e)=> game.rollNewDices());
+  lockButton.on.click.add((e){ 
+    lockButton.disabled = true;
+    game.lockAllDices();
+    List<EvaluationResult> results = game.evaluateAll();
+    
+    DrawableAnimation animation = createAnimation(results, engine);
+    if (animation != null){
+      animation.onEnded.add((){
+        game.fillTurnSlot();
+        lockButton.disabled = false;
+      });
+    }else{
+      game.fillTurnSlot();
+      lockButton.disabled = false;
+    }
+  });
  
   window.requestAnimationFrame(engine.draw);
+}
+
+DrawableAnimation createAnimation(List<EvaluationResult> results, RenderingEngine engine) {
+  final double originalAlpha = 1.0;
+  final double destAlpha = 0.4;
+  final num alphaLen = 350;
+  
+  final num delay = 0;
+  
+  num lastLen = 0;
+  
+  AnimationChain animation = null;
+  for(EvaluationResult result in results){
+    for(Dice dice in result.dices){
+      Drawable drawableDice = engine.contentLayer.drawables[dice];
+      
+      if (drawableDice is BoxedAnimatable){
+        BoxedAnimatable animatable = drawableDice;
+        
+        animation = new AnimationChain();
+        animation.addAnimation(new AnimationPause(lastLen));
+        animation.addAnimation(new AlphaTransition<Drawable>(alphaLen, originalAlpha, destAlpha));
+        animation.addAnimation(new AlphaTransition<Drawable>(alphaLen, destAlpha, originalAlpha));
+        
+        animatable.addAnimation(animation);
+      }
+    }
+    lastLen = animation.animationLen;
+  }
+  return animation;
 }
 
 

@@ -251,13 +251,6 @@ class GameElementsFactory{
   }
 }
 
-class EvaluationResult{
-  List<Field> fields;
-  num points;
-  
-  EvaluationResult(List<Field> this.fields, num this.points);
-}
-
 typedef void updatePointsCallback(int points);
 
 class Game{
@@ -281,9 +274,7 @@ class Game{
     _board.lockAllDices();
   }
   
-  void rollNewDices(){
-    lockAllDices();
-    evaluateAll();
+  void fillTurnSlot(){
     if (_turnSlot.isEmpty()){
       void setNewDice(Field f){
         if (f.isFree())
@@ -356,22 +347,19 @@ class Game{
   List<List<Field>> _fieldSets = null;
   
   List<EvaluationResult> evaluateAll(){
-    List<EvaluationResult> results = new List<EvaluationResult>();
     
     if (_fieldSets == null){
       _fieldSets = getAllCombinations();
     }
     
     Collection<List<Field>> setsToEvaluate = 
-        _fieldSets.filter((List<Field> fields) => noneIsEmpty(fields) && hasUnlockedDice(fields));
+        _fieldSets.filter((List<Field> fields) => noneIsEmpty(fields));// && hasUnlockedDice(fields));
      
     List<Dice> dices = new List<Dice>(4);
+    List<EvaluationResult> results = new List<EvaluationResult>();
     for(List<Field> fields in setsToEvaluate){
       importDices(fields, dices);
-      num points = evaluator.getEvaluationFor(dices);
-      if (points > 0){
-        results.add(new EvaluationResult(fields, points));
-      }
+      results.addAll(evaluator.getEvaluationFor(dices));
     }
     return results;
   }

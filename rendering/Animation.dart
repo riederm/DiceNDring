@@ -3,14 +3,16 @@
 part of render;
 typedef void Callback();
 
-abstract class Animation extends Drawable{
+abstract class DrawableAnimation<T>{
   num animationLen = 0;
   num animationStart = -1;
   bool isActive = true;
+  List<Callback> onEnded = new List<Callback>();
   
-  Animation(num this.animationLen);
+  DrawableAnimation(num this.animationLen);
   
-  void draw(CanvasRenderingContext2D context, num time){
+  void prepareAnimationFrame(num time){
+    
     if (animationStart == -1){
       animationStart = time;
     }
@@ -20,20 +22,22 @@ abstract class Animation extends Drawable{
       calcNextAnimationFrame(time, t);
     }else{
       calcEndFrame(time, t);
+      onEnded.forEach((Callback c) => c());
     }
-    drawAnimation(context, time);
+    //drawAnimation(context, time);
   }
+  void preDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){}
+  void postDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){}
   
   void reset(){
     animationStart = -1;
   }
   
-  void drawAnimation(CanvasRenderingContext2D context, num absT);
   void calcNextAnimationFrame(num absT, num t);
   void calcEndFrame(num absT, num t);
 }
 
-class AnimationLoop extends AnimationChain{
+class AnimationLoop<T> extends AnimationChain<T>{
   
   void calcEndFrame(num absT, num t){
     super.calcEndFrame(absT, t);
@@ -41,32 +45,27 @@ class AnimationLoop extends AnimationChain{
     currentAnimationIndex = 0;
     animationStart = absT;
     currentAnimationStart = -1;
-    _animations.forEach((Animation a) => a.reset());
+    _animations.forEach((DrawableAnimation a) => a.reset());
   }
   
 }
 
-class AnimationChain extends Animation{
-  List<Animation> _animations = new List<Animation>();
+class AnimationChain<T> extends DrawableAnimation<T>{
+  List<DrawableAnimation> _animations = new List<DrawableAnimation>();
   bool _canAddAnimations = true;
   int currentAnimationIndex = 0;
   num currentAnimationStart = -1;
   
   AnimationChain(): super(0);
   
-  AnimationChain addAnimation(Animation a){
+  AnimationChain addAnimation(DrawableAnimation a){
     if (_canAddAnimations){
       _animations.addLast(a);
       animationLen += a.animationLen;
     }
     return this;
   }
-  
-  
-  void drawAnimation(CanvasRenderingContext2D context, num absT){
-    _animations[currentAnimationIndex].drawAnimation(context, absT);
-  }
-  
+
   void calcNextAnimationFrame(num absT, num t){
     num relT = absT-currentAnimationStart;
     currentAnimationIndex = moveToNextAnimation(relT, absT);
@@ -75,7 +74,15 @@ class AnimationChain extends Animation{
   }
   
   void calcEndFrame(num absT, num t){
-    //_animations.last.calcEndFrame(absT, absT-currentAnimationStart);
+    _animations.last.calcEndFrame(absT, absT-currentAnimationStart);
+  }
+  
+  void preDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){
+    _animations[currentAnimationIndex].preDelegateDraw(context, delegate, time);
+  }
+  
+  void postDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){
+    _animations[currentAnimationIndex].postDelegateDraw(context, delegate, time);
   }
   
   int moveToNextAnimation(num t, num absT){
@@ -85,7 +92,7 @@ class AnimationChain extends Animation{
     
     int index = currentAnimationIndex;
     num runningTime = absT - currentAnimationStart;
-    Animation animation = _animations[index];
+    DrawableAnimation animation = _animations[index];
     
     num timeLeft = animation.animationLen - runningTime;
     if (timeLeft > 0){
@@ -101,7 +108,7 @@ class AnimationChain extends Animation{
 
   int moveIndex(int currentIndex, num skipTime, num absTime) {
     while(currentIndex < _animations.length){
-      Animation animation = _animations[currentIndex];
+      DrawableAnimation animation = _animations[currentIndex];
       //does current animation fit into the skipTime-window?
       if (animation.animationLen > skipTime){
         //yes we found the animation
@@ -118,30 +125,75 @@ class AnimationChain extends Animation{
     }
     return -1;
   }
-  
-  
 }
 
-abstract class AnimationAdapter<T extends Drawable> extends Animation {
-  T delegate;
+class AnimationPause extends DrawableAnimation<Drawable>{
+  AnimationPause(num animationLen): super(animationLen);
   
-  AnimationAdapter(T this.delegate, num animationLen): super(animationLen);
-  
-  void drawAnimation(CanvasRenderingContext2D context, num absT){
-    delegate.draw(context, absT);
-  }
-  
-}
-
-class AnimationPause<T extends Drawable> extends AnimationAdapter<T>{
-  AnimationPause(T delegate, num animationLen): super(delegate, animationLen);
+  void preDelegateDraw(CanvasRenderingContext2D context, Drawable delegate, num time){}
+  void postDelegateDraw(CanvasRenderingContext2D context, Drawable delegate, num time){}
   
   void calcNextAnimationFrame(num absT, num t){}
   void calcEndFrame(num absT, num t){}
 }
 
+/*class Rotation<T extends Drawable> extends DrawableAnimation<T>{
+  Rotation(num animationLen): super(animationLen){
+    deltaRotation = 2*math.PI / animationLen;
+  }
+  num deltaRotation;
+  num rotation;
+  
+  void calcNextAnimationFrame(num absT, num t){
+    rotation = deltaRotation*t;
+  }
+  
+  void drawAnimation(CanvasRenderingContext2D context, num absT){
+    context.save();
+    context.rotate(rotation);
+    super.drawAnimation(context, absT);
+    context.restore();
+  }
+  
+  void calcEndFrame(num absT, num t){
+    rotation = 0;
+  }
+}*/
 
-class ColorTransition extends AnimationAdapter<DrawableDice> {
+class AlphaTransition<T> extends DrawableAnimation<T>{
+  num alpha = 1;
+  num deltaAlpha = 1;
+  num targetAlpha;
+  num startAlpha;
+  
+  AlphaTransition(num animationLen, num this.startAlpha, num this.targetAlpha): 
+    super(animationLen){
+    deltaAlpha = (targetAlpha - startAlpha)/animationLen;    
+  }
+  
+  void calcNextAnimationFrame(num absT, num t){
+    alpha = deltaAlpha*t + startAlpha;
+  }
+  
+  void calcEndFrame(num absT, num t){
+    alpha = targetAlpha;
+  }
+  
+  void preDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){
+    context.save();
+    context.setAlpha(alpha);
+  }
+  
+  void postDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){
+    context.restore();
+  }
+  
+  void reset(){
+    alpha = 1;
+  }
+}
+
+/*class ColorTransition extends AnimationAdapter<DrawableDice> {
     RGBColor targetColor;
     double _deltaR=0.0;
     double _deltaG=0.0;
@@ -166,6 +218,10 @@ class ColorTransition extends AnimationAdapter<DrawableDice> {
       color.B = (initialColor.B + (_deltaB*t)).round().toInt();
     }
     
+    void preDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){
+      
+    }
+    
     void calcEndFrame(num absT, num t){
       delegate.dice.color.apply(targetColor);
     }
@@ -174,4 +230,4 @@ class ColorTransition extends AnimationAdapter<DrawableDice> {
       super.reset();
       initialized = false;
     }
-}
+}*/

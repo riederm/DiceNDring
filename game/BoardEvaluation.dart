@@ -251,20 +251,27 @@ class Evaluator{
     evaluators.sort((BoardEvaluation a, BoardEvaluation b) => a.points.compareTo(b.points));
   }
   
-  num getEvaluationFor(List<Dice> dices){
-    num points = 0;
-    
+  List<EvaluationResult> getEvaluationFor(List<Dice> dices){
     FieldSetStats myStats = stats;
     
     stats.updateStats(dices);
     
+    List<EvaluationResult>  results = new List<EvaluationResult>();
     for(BoardEvaluation e in evaluators){
       num p = e.evaluate(stats);
       if (p != null && p > 0){
-        points += p;
+        results.add(new EvaluationResult(p, new List<Dice>.from(dices), "unknown"));
       }
     }
-    return points;
+    return results;
   }
+}
+
+class EvaluationResult{
+  num points;
+  List<Dice> dices;
+  String name;
+  
+  EvaluationResult(num this.points, List<Dice> this.dices, String this.name);
   
 }

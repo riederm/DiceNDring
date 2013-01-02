@@ -11,6 +11,10 @@ abstract class Drawable{
     _visible = visible; 
   }
   
+  void drawAnimated(CanvasRenderingContext2D context, num time){
+    draw(context, time);
+  }
+  
   void draw(CanvasRenderingContext2D context, num time);
   
   /**
@@ -192,10 +196,16 @@ class RenderingEngine{
     query("#notes").text = "${fpsAverage.round().toInt()} fps";
   }
 
-  void removeFromAllLayers(Object d) {
-    backgroundLayer.drawables.remove(d);
-    contentLayer.drawables.remove(d);
-    foregroundLayer.drawables.remove(d);
+  Drawable removeFromAllLayers(Object d) {
+    Drawable drawable = null;
+    drawable = backgroundLayer.drawables.remove(d);
+    if (drawable != null) return drawable;
+    
+    drawable = contentLayer.drawables.remove(d);
+    if (drawable != null) return drawable;
+    
+    drawable = foregroundLayer.drawables.remove(d);
+    if (drawable != null) return drawable;
   }
   
   void registerDrawableField(Field field){
