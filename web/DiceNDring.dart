@@ -20,51 +20,40 @@ void main() {
   
   GameElementsFactory diceFactory = new GameElementsFactory();
 
-  void diceAdded(Dice d){
+  diceFactory.onCreatedDice = (Dice d){
     handler.addDice(d);
-    
-    DrawableDice drawable = new DrawableDice(d);
-    RGBColor white = new RGBColor(0xff, 0xff, 0xff);
-    RGBColor originalColor = new RGBColor(0,0,0);
-    originalColor.apply(drawable.delegate.color);
-    
-    /*AnimationLoop<DrawableDice> loop = new AnimationLoop<DrawableDice>();
-    loop.addAnimation(new AnimationPause(1000));
-    loop.addAnimation(new AlphaTransition<DrawableDice>(350, 1, 0.3));
-    loop.addAnimation(new AlphaTransition<DrawableDice>(350, 0.3, 1));
-    
-    drawable.animations.add(loop);*/
-    engine.contentLayer.drawables[d] = drawable;
+    engine.contentLayer.drawables[d] = new DrawableDice(d);
   };
   
-  void diceDispose(Dice d){
+  diceFactory.onDisposeDice = (Dice d){
     handler._dices.remove(d);
     engine.removeFromAllLayers(d);
-  }        
-  
-  diceFactory.onCreatedDice = diceAdded;
-  diceFactory.onDisposeDice = diceDispose;
-  
-  void fieldCreated(CompositeBoxDrawable drawable, Field field){
-    drawable.addDrawable(new DrawableField(field));
-    handler.addField(field);
-  }
+  };
   
   Rectangle r = new Rectangle(new Point2D(40,40), 4*Field.FIELD_WIDTH, Field.FIELD_HEIGHT);
-  GameElementsFactory turnFactory = new GameElementsFactory();
+
   CompositeBoxDrawable turnDrawable = new CompositeBoxDrawable(r);
-  turnFactory.onCreatedField = (Field f) => fieldCreated(turnDrawable, f);
+  GameElementsFactory turnFactory = new GameElementsFactory();
+  turnFactory.onCreatedField = (Field field){
+    turnDrawable.addDrawable(new DrawableField(field));
+    handler.addField(field);
+  };
+
   GameBoard turnSlot = new GameBoard(r, turnFactory, 4, 1);
   engine.backgroundLayer.drawables[turnSlot] = turnDrawable;
   
   Rectangle boardRect = new Rectangle(new Point2D(40,140), 250, 250);
   GameElementsFactory boardFactory = new GameElementsFactory();
   CompositeBoxDrawable boardDrawable = new CompositeBoxDrawable(boardRect);
-  boardFactory.onCreatedField = (Field f) => fieldCreated(boardDrawable, f);
+  
+  boardFactory.onCreatedField = (Field field){
+    boardDrawable.addDrawable(new DrawableField(field));
+    handler.addField(field);
+  };
+  
   GameBoard board = new GameBoard(boardRect, boardFactory, 4, 4);
-  
   engine.backgroundLayer.drawables[board] = boardDrawable;
-  
+
   Game game = new Game(turnSlot, board, diceFactory);
   game.onUpdatePoints = (int points) => query("#points").text = "${points} points";
   
@@ -75,6 +64,39 @@ void main() {
     lockButton.disabled = true;
     game.lockAllDices();
     List<EvaluationResult> results = game.evaluateAll();
+    
+    Dice contains(List<Dice> dices, int x, int y){
+      for(Dice d in dices){
+        if (d.field.x == x && d.field.y == y){
+          return d;
+        }
+      }
+      return null;
+    }
+    
+    String getCoordinates(List<Dice> dices){
+      StringBuffer buffer = new StringBuffer();
+      for(int y=0; y<4; y++){
+        for(int x=0; x<4; x++){
+          Dice d = contains(dices, x,y);
+          if (d != null){
+            buffer.add("[${d}]");
+          }else{
+            buffer.add("[  ]");
+          }
+        }
+        buffer.add(new String.fromCharCodes([0x000A]));
+      }
+      return buffer.toString();
+      //return dices.reduce("", (String prev, Dice d) => "${prev} (${d.field.x},${d.field.y})" );
+    }
+    
+    print("evaluate ... ");
+    for(EvaluationResult result in results){
+      print("result: ${result.points} - ${result.name}");
+      print( "${getCoordinates(result.dices)}");
+      print("");
+    }
     
     DrawableAnimation animation = createAnimation(results, engine);
     if (animation != null){
@@ -97,7 +119,6 @@ DrawableAnimation createAnimation(List<EvaluationResult> results, RenderingEngin
   final num alphaLen = 350;
   
   final num delay = 0;
-  
   num lastLen = 0;
   
   AnimationChain animation = null;

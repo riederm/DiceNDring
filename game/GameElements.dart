@@ -80,24 +80,43 @@ class Dice extends BoxedElement{
   bool isDragged = false;
   Field field = null;
   
-  RGBColor color;
+  RGBColor backgroundColor;
+  RGBColor lineColor = new RGBColor(0x0, 0x0, 0x0);
   
   Dice(int this.value, int this.colorValue, Rectangle box): super(box){
-    color = new RGBColor(0,0,0);
+    backgroundColor = new RGBColor(0,0,0);
     switch(colorValue){
       case 0:
-        color.apply(RED_Color);//"#CC3300";
+        backgroundColor.apply(RED_Color);//"#CC3300";
         break;
       case 1:
-        color.apply(BLUE_Color);//"#0066FF";
+        backgroundColor.apply(BLUE_Color);//"#0066FF";
         break;
       case 2: 
-        color.apply(GREEN_Color);//"#339900";
+        backgroundColor.apply(GREEN_Color);//"#339900";
         break;
       case 3: 
       default:
-        color.apply(YELLOW_Color);//"#FFCC33";
+        backgroundColor.apply(YELLOW_Color);//"#FFCC33";
         break;
+    }
+  }
+  
+  String toString(){
+    return "${_getColorString()}${value}";
+  }
+  
+  String _getColorString(){
+    switch(colorValue){
+      case 0:
+        return "R";
+      case 1:
+        return "B";
+      case 2: 
+        return "G";
+      case 3: 
+      default:
+        return "Y";
     }
   }
 }
@@ -110,7 +129,10 @@ class Field extends BoxedElement{
   static final defaultBackground = "white"; //"#99CCFF";
   static final selectedBackground = "#ffcccc";
   
-  Field(Rectangle box): super(box);
+  int x=0;
+  int y=0;
+  
+  Field(Rectangle box, int this.x, int this.y): super(box);
   
   bool _selected = false;
   bool _diceLocked = false;
@@ -166,6 +188,10 @@ class Field extends BoxedElement{
   bool isFree(){
     return dice == null;
   }
+  
+  String toString(){
+    return "(${x}, ${y})";
+  }
 }
 
 class GameBoard extends BoxedElement{
@@ -180,16 +206,16 @@ class GameBoard extends BoxedElement{
       for(num x=0; x<_horizontalFields; x++){
         Point2D pos = new Point2D(x*(Field.FIELD_WIDTH+MARGIN), y*(Field.FIELD_HEIGHT+MARGIN));
         Rectangle rect = new Rectangle(pos, Field.FIELD_WIDTH, Field.FIELD_HEIGHT);
-        Field field = factory.createField(rect);
+        Field field = factory.createField(rect, x, y);
         fields.add(field);
-        //addDrawable(field);
         field.box.parentRectangle = this.box;
       }
     }
   }
+  // (0,0) (1,0) (2,0) (3,0) (0,1) (1,1) (2,1) (3,1) (0,2) (1,2) ...
   
   Field getField(int x, int y){
-    return fields[y*_horizontalFields + x];
+    return fields[y*(_horizontalFields) + x ];
   }
   
   bool isEmpty() {
@@ -235,8 +261,8 @@ class GameElementsFactory{
     return d;
   }
   
-  Field createField(Rectangle rect){
-    Field field = new Field(rect);
+  Field createField(Rectangle rect, int x, int y){
+    Field field = new Field(rect,x,y);
     
     if (onCreatedField != null){
       onCreatedField(field);
@@ -251,43 +277,15 @@ class GameElementsFactory{
   }
 }
 
-typedef void updatePointsCallback(int points);
-
-class Game{
-  GameBoard _turnSlot;
+class FieldSetSelector{
   GameBoard _board;
   
-  GameElementsFactory _diceFactory;
-  Evaluator evaluator = new Evaluator();
-  
-  num _points = 0;
-  
-  updatePointsCallback onUpdatePoints;
-  
-  Game(GameBoard this._turnSlot, GameBoard this._board, GameElementsFactory this._diceFactory);
-  
-  bool canLock(){
-    return _turnSlot.isEmpty();
-  }
-  
-  void lockAllDices(){
-    _board.lockAllDices();
-  }
-  
-  void fillTurnSlot(){
-    if (_turnSlot.isEmpty()){
-      void setNewDice(Field f){
-        if (f.isFree())
-          f.setDice(_diceFactory.createRandomDice());
-      }
-      _turnSlot.fields.forEach(setNewDice);
-    }
-  }
+  FieldSetSelector(GameBoard this._board);
   
   List<Field> getRow(int row){
     List<Field> fields = new List<Field>();
     for(int i=0; i<4; i++){
-      fields.add(_board.getField(row, i));
+      fields.add(_board.getField(i, row));
     }
     return fields;
   }
@@ -295,7 +293,7 @@ class Game{
   List<Field> getCol(int col){
     List<Field> fields = new List<Field>();
     for(int i=0; i<4; i++){
-      fields.add(_board.getField(i, col));
+      fields.add(_board.getField(col, i));
     }
     return fields;
   }
@@ -344,12 +342,51 @@ class Game{
     return fieldSets;
   }
   
+}
+
+typedef void updatePointsCallback(int points);
+
+class Game{
+  GameBoard _turnSlot;
+  GameBoard _board;
+  
+  FieldSetSelector fieldSetSelector;
+  
+  GameElementsFactory _diceFactory;
+  Evaluator evaluator = new Evaluator();
+  
+  num _points = 0;
+  
+  updatePointsCallback onUpdatePoints;
+  
+  Game(GameBoard this._turnSlot, GameBoard this._board, GameElementsFactory this._diceFactory){
+    fieldSetSelector  = new FieldSetSelector(_board);
+  }
+  
+  bool canLock(){
+    return _turnSlot.isEmpty();
+  }
+  
+  void lockAllDices(){
+    _board.lockAllDices();
+  }
+  
+  void fillTurnSlot(){
+    if (_turnSlot.isEmpty()){
+      void setNewDice(Field f){
+        if (f.isFree())
+          f.setDice(_diceFactory.createRandomDice());
+      }
+      _turnSlot.fields.forEach(setNewDice);
+    }
+  }
+  
   List<List<Field>> _fieldSets = null;
   
   List<EvaluationResult> evaluateAll(){
     
     if (_fieldSets == null){
-      _fieldSets = getAllCombinations();
+      _fieldSets = fieldSetSelector.getAllCombinations();
     }
     
     Collection<List<Field>> setsToEvaluate = 

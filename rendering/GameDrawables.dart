@@ -92,8 +92,8 @@ class DrawableDice extends BoxedAnimatable<Dice>{
   
   void internalDrawNormalized(CanvasRenderingContext2D context, Dice dice, num time){
     scaleContext(context);
-    context.fillStyle = dice.color.toString();
-    context.strokeStyle = "black";
+    context.fillStyle = dice.backgroundColor.toString();
+    context.strokeStyle = dice.lineColor.toString();
     context.lineWidth = 0.06;
     roundRect(context, 0, 0, 1, 1, 0.1, true, true);
     context.fillStyle = "black";
