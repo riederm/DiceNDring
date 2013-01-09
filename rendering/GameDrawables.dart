@@ -99,6 +99,19 @@ class DrawableDice extends BoxedAnimatable<Dice>{
     context.fillStyle = "black";
     _drawValue(context, dice.value);
   }
+}
+
+class ScoreDrawable extends BoxedAnimatable<Score>{
+  ScoreDrawable(Score score): super(score);
   
+  void internalDrawNormalized(CanvasRenderingContext2D context, Score score, num time){
+    scaleContext(context);
+    context.fillStyle = score.backgroundColor.toString();
+    context.strokeStyle = "black";
+    context.lineWidth = 0.06;
+    TextMetrics metrics = context.measureText(score.value.toString());
+    //score.
+    score.box.width = metrics.width + 20;
+  }
 }
 

@@ -1,13 +1,14 @@
 library geo;
 
-class Point2D{
+class Vector2D{
   num x, y;
   
-  Point2D(num this.x, num this.y);
+  Vector2D(num this.x, num this.y);
   
-  operator +(Point2D other) => new Point2D(x+other.x, y+other.y); 
+  operator +(Vector2D other) => new Vector2D(x+other.x, y+other.y); 
+  operator -(Vector2D other) => new Vector2D(x-other.x, y-other.y);
   
-  void move(Point2D p){
+  void move(Vector2D p){
     moveBy(p.x,p.y);
   }
   
@@ -16,34 +17,38 @@ class Point2D{
     this.y+=y;
   }
   
-  void moveTo(Point2D p){
+  void moveTo(Vector2D p){
     this.x = p.x;
     this.y = p.y;
+  }
+  
+  void scale(num factor){
+    this.x *= factor;
+    this.y *= factor;
   }
 }
 
 class Rectangle {
-
-  Point2D pos;
+  Vector2D pos;
   Rectangle parentRectangle; 
   num width;
   num height;
   
-  Rectangle(Point2D this.pos, num this.width, num this.height);
+  Rectangle(Vector2D this.pos, num this.width, num this.height);
   
   num get right   => pos.x + width;
   num get bottom  => pos.y + height;
   num get left    => pos.x;
   num get top     => pos.y;
   
-  Point2D absPos(){
+  Vector2D absPos(){
     if (parentRectangle != null){
       return pos + parentRectangle.absPos();
     }
     return pos;
   }
   
-  bool isPointInside(Point2D p){
+  bool isPointInside(Vector2D p){
     return isInside(p.x, p.y);
   }
   

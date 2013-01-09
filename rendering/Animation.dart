@@ -193,6 +193,29 @@ class AlphaTransition<T> extends DrawableAnimation<T>{
   }
 }
 
+class PositionTransition<T> extends DrawableAnimation<T>{
+  Vector2D delta;
+  
+  Vector2D nextPoint;
+  Vector2D endPoint;
+  
+  PositionTransition(num animationLen, Vector2D startPoint, Vector2D this.endPoint): 
+    super(animationLen){
+    delta = (endPoint - startPoint);
+    delta.scale(1/animationLen);
+    nextPoint = startPoint;
+  }
+  
+  void calcNextAnimationFrame(num absT, num t){
+    nextPoint.moveBy(delta.x * t, delta.y * t);
+  }
+  
+  void calcEndFrame(num absT, num t){
+   nextPoint = endPoint;
+  }
+  
+}
+
 /*class ColorTransition extends AnimationAdapter<DrawableDice> {
     RGBColor targetColor;
     double _deltaR=0.0;

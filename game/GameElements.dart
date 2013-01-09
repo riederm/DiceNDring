@@ -421,3 +421,10 @@ class Game{
     }
   }
 }
+
+class Score extends BoxedElement{
+  num value;
+  RGBColor backgroundColor;
+  Score(RGBColor this.backgroundColor): super(new Rectangle(new Point2D(0,0), 0,0));
+    
+}

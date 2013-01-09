@@ -126,17 +126,13 @@ class TwoFullPairEvaluation extends BoardEvaluation{
     if (numberOfTwoColors == 2 && numberOfTwoValues == 2){
       //check if the two's have the same color
       Dice firstDice = stats.dices[0];
-      //print("${firstDice.hashCode} - ${firstDice.value}, ${firstDice.colorValue}");
-      //print("----");
-      //find the second dice with this color and check if the number matches (the other 2 must match automatically!)
+      //find the second dice with this color and check if the number matches 
+      //(the other 2 must match automatically!)
       bool secondDiceFound = stats.dices.some((Dice d){ 
-            //  print("${d.hashCode} - ${d.value}, ${d.colorValue}");
-               
             bool same =  d != firstDice;
             bool valueSame = d.value == firstDice.value;
             bool colorSame = d.colorValue == firstDice.colorValue;
 
-            //print("${same}, ${valueSame}, ${colorSame}");
             return same && valueSame && colorSame;
           });
             
@@ -150,25 +146,25 @@ class TwoFullPairEvaluation extends BoardEvaluation{
 }
 
 class SameValueSameColorEvaluation extends And{
-  SameValueSameColorEvaluation(num points, bool removesDices, String name): 
+  SameValueSameColorEvaluation(num points, bool removesDices, [String name = "Same Color Same Values"]): 
     super(points, removesDices, new SameColorEvaluation(1, false), 
                                 new SameValueEvaluation(1, false), name);
 }
 
 class SameColorDifferentValuesEvaluation extends And{
-  SameColorDifferentValuesEvaluation(num points, bool removesDices, String name):
+  SameColorDifferentValuesEvaluation(num points, bool removesDices, [String name = "Same Color Different Values"]):
     super(points, removesDices, new SameColorEvaluation(1, false), 
                                 new DifferentValueEvaluation(1, false), name);
 }
 
 class DifferentColorSameValuesEvaluation extends And{
-  DifferentColorSameValuesEvaluation(num points, bool removesDices, String name):
+  DifferentColorSameValuesEvaluation(num points, bool removesDices, [String name = "Different Color Same Values"]):
     super(points, removesDices, new DifferentColorEvaluation(1, false), 
                                 new SameValueEvaluation(1, false), name);
 }
 
 class DifferentColorDifferentValuesEvaluation extends And{
-  DifferentColorDifferentValuesEvaluation(num points, bool removesDices, String name):
+  DifferentColorDifferentValuesEvaluation(num points, bool removesDices, [String name = "Different Color Different Values"]):
       super(points, removesDices, new DifferentColorEvaluation(1, false), 
                                   new DifferentValueEvaluation(1, false), name);
   
