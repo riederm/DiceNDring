@@ -24,7 +24,6 @@ abstract class DrawableAnimation<T>{
       calcEndFrame(time, t);
       onEnded.forEach((Callback c) => c());
     }
-    //drawAnimation(context, time);
   }
   void preDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){}
   void postDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){}
@@ -137,29 +136,6 @@ class AnimationPause extends DrawableAnimation<Drawable>{
   void calcEndFrame(num absT, num t){}
 }
 
-/*class Rotation<T extends Drawable> extends DrawableAnimation<T>{
-  Rotation(num animationLen): super(animationLen){
-    deltaRotation = 2*math.PI / animationLen;
-  }
-  num deltaRotation;
-  num rotation;
-  
-  void calcNextAnimationFrame(num absT, num t){
-    rotation = deltaRotation*t;
-  }
-  
-  void drawAnimation(CanvasRenderingContext2D context, num absT){
-    context.save();
-    context.rotate(rotation);
-    super.drawAnimation(context, absT);
-    context.restore();
-  }
-  
-  void calcEndFrame(num absT, num t){
-    rotation = 0;
-  }
-}*/
-
 class AlphaTransition<T> extends DrawableAnimation<T>{
   num alpha = 1;
   num deltaAlpha = 1;
@@ -181,7 +157,7 @@ class AlphaTransition<T> extends DrawableAnimation<T>{
   
   void preDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){
     context.save();
-    context.setAlpha(alpha);
+    context.globalAlpha = alpha;
   }
   
   void postDelegateDraw(CanvasRenderingContext2D context, T delegate, num time){
@@ -193,7 +169,7 @@ class AlphaTransition<T> extends DrawableAnimation<T>{
   }
 }
 
-class PositionTransition<T> extends DrawableAnimation<T>{
+class PositionTransition extends DrawableAnimation<BoxedDrawable>{
   Vector2D delta;
   
   Vector2D nextPoint;
@@ -214,6 +190,28 @@ class PositionTransition<T> extends DrawableAnimation<T>{
    nextPoint = endPoint;
   }
   
+  void preDelegateDraw(CanvasRenderingContext2D context, BoxedDrawable delegate, num time){
+    delegate.box.centerAbsoluteOverPoint(nextPoint.x, nextPoint.y);
+  }
+}
+
+class MakeVisible extends DrawableAnimation<Drawable>{
+  bool _visible;
+  
+  MakeVisible(bool this._visible): super(1);
+  
+  void calcNextAnimationFrame(num absT, num t){
+    
+  }
+  
+  void calcEndFrame(num absT, num t){
+    print("MakeVisible");
+  }
+  
+  void preDelegateDraw(CanvasRenderingContext2D context, Drawable delegate, num time){
+    delegate.setVisible(_visible);
+print("pre MakeVisible");
+  }
 }
 
 /*class ColorTransition extends AnimationAdapter<DrawableDice> {

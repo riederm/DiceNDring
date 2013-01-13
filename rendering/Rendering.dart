@@ -86,12 +86,14 @@ abstract class BoxedDrawable extends Drawable{
   void scaleContext(CanvasRenderingContext2D context){
     if (!_alreadyScaled){
       context.scale(box.width, box.height);
+      _alreadyScaled = true;
     }
   }
 
   void draw(CanvasRenderingContext2D context, num time){
     context.save();
     try{
+      _alreadyScaled = false;
       context.translate(box.left, box.top);
       drawNormalized(context, time);
     }finally{

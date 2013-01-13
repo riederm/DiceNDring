@@ -204,7 +204,7 @@ class GameBoard extends BoxedElement{
   GameBoard(Rectangle box, GameElementsFactory factory, [int this._horizontalFields = 4, int this._verticalFields = 4]): super(box){
     for(num y=0; y<_verticalFields; y++){
       for(num x=0; x<_horizontalFields; x++){
-        Point2D pos = new Point2D(x*(Field.FIELD_WIDTH+MARGIN), y*(Field.FIELD_HEIGHT+MARGIN));
+        Vector2D pos = new Vector2D(x*(Field.FIELD_WIDTH+MARGIN), y*(Field.FIELD_HEIGHT+MARGIN));
         Rectangle rect = new Rectangle(pos, Field.FIELD_WIDTH, Field.FIELD_HEIGHT);
         Field field = factory.createField(rect, x, y);
         fields.add(field);
@@ -251,7 +251,7 @@ class GameElementsFactory{
   }
   
   Dice createRandomDice(){
-    Rectangle rect = new Rectangle(new Point2D(0,0),Dice.DICE_WIDTH,Dice.DICE_WIDTH);
+    Rectangle rect = new Rectangle(new Vector2D(0,0),Dice.DICE_WIDTH,Dice.DICE_WIDTH);
     
     Dice d = new Dice(getRandomValue(), getRandomColor(), rect);
     
@@ -423,8 +423,8 @@ class Game{
 }
 
 class Score extends BoxedElement{
-  num value;
+  num value = 100;
   RGBColor backgroundColor;
-  Score(RGBColor this.backgroundColor): super(new Rectangle(new Point2D(0,0), 0,0));
+  Score(RGBColor this.backgroundColor, Rectangle rect): super(rect);
     
 }

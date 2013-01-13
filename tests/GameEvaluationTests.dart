@@ -17,7 +17,7 @@ void testEvaluationResult(){
 
 void evaluateFirstAndThierdRows() {
   GameElementsFactory factory = new GameElementsFactory();
-  GameBoard board = new GameBoard(new Rectangle(new Point2D(0,0), 0,0), factory);
+  GameBoard board = new GameBoard(new Rectangle(new Vector2D(0,0), 0,0), factory);
   fillRow(board, factory, 0);
   fillRow(board, factory, 2);
   
@@ -29,14 +29,12 @@ void evaluateFirstAndThierdRows() {
   test('too much EvaluationResults', () => expect(results.length, 2));
   
   List<Dice> dices = results[0].dices;
-  
   testContainsDice(dices,0,0);
   testContainsDice(dices,1,0);
   testContainsDice(dices,2,0);
   testContainsDice(dices,3,0);
   
   dices = results[1].dices;
-  
   testContainsDice(dices,0,2);
   testContainsDice(dices,1,2);
   testContainsDice(dices,2,2);
